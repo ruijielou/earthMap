@@ -1,5 +1,12 @@
-define(["qlik", "./lib/echarts", './lib/world', "./lib/worldoption", "./lib/WMMethod"],
-    function(qlik, echarts, world, worldoption) {
+define(["qlik", "./lib/echarts", './lib/world', "./lib/china", "./lib/worldOption", "./lib/worldMap"],
+    function(qlik, echarts, world, china, worldOption) {
+
+        function isNotNull(str) {
+            if (str === null || str === '' || str === '\\N' || str === undefined || str === 0) {
+                return false;
+            }
+            return true;
+        }
 
         return {
             initialProperties: {
@@ -18,7 +25,8 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/worldoption", "./lib/WMMe
                 items: {
                     dimensions: {
                         uses: 'dimensions',
-                        max: 1,
+                        min: 2,
+                        max: 2,
                         items: {
                             longitude: longitude,
                             latitude: latitude
@@ -26,7 +34,10 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/worldoption", "./lib/WMMe
                     },
                     measures: {
                         uses: "measures",
-                        max: 1
+                        max: 8,
+                        items: {
+                            direction: direction
+                        }
                     },
                     sorting: {
                         uses: "sorting"
@@ -38,7 +49,8 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/worldoption", "./lib/WMMe
                         type: "items",
                         label: "地图",
                         items: {
-                            backgroundColor: backgroundColor
+                            backgroundColor: backgroundColor,
+                            mapType: mapType
                         }
                     },
                     layout2: {
@@ -56,7 +68,7 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/worldoption", "./lib/WMMe
                         type: "items",
                         label: "航线",
                         items: {
-                            RouteDirection: RouteDirection,
+                            // RouteDirection: RouteDirection,
                             FlightIcon: FlightIcon,
                             flightIconSpeed: flightIconSpeed,
                             FlightColor: flightIconColor
@@ -67,7 +79,7 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/worldoption", "./lib/WMMe
                         label: "阈值",
                         items: {
                             visualMapStatus: visualMapStatus,
-                            visualMapColor: visualMapColor 
+                            visualMapColor: visualMapColor
                         }
                     }
                 }
@@ -79,13 +91,13 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/worldoption", "./lib/WMMe
             },
             paint: function($element, layout) {
 
+                console.log(layout);
+
+                // console.log(layout.qHyperCube.qMeasureInfo[i].direction)
+
                 var worldMap = new WorldMap(layout);
 
                 //add your rendering code here
-                var height = $element.height();
-                var width = $element.width();
-
-                $element.html("<div class='worldMap' style='height: " + height + "px;width: " + width + "px'></div>")
 
                 var geoCoordMap = worldMap.getGeoCoordMap();
                 var seriesDataList = worldMap.getSeriesData();
@@ -100,8 +112,8 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/worldoption", "./lib/WMMe
                     showEffectOn: 'render',
                     coordinateSystem: 'geo',
                     rippleEffect: {
-                        period: 30,
-                        scale: 2.5,
+                        period: 6,
+                        scale: 2,
                         brushType: 'stroke'
                     },
                     symbol: 'circle',
@@ -123,9 +135,18 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/worldoption", "./lib/WMMe
                         }
                     }
                 }];
-               
+
+                // 获取每次被选中的series数组,然后获取当前series里边所在城市的经纬度值来画圆点,默认是0
+
                 function getSeriesList(seriesDataList) {
+                    var direction = '';
                     for (var item in seriesDataList) {
+                       
+                        for(var key = 0; key< layout.qHyperCube.qMeasureInfo.length; key ++) {
+                            if(layout.qHyperCube.qMeasureInfo[key].qFallbackTitle == item) {
+                                direction = layout.qHyperCube.qMeasureInfo[key].direction
+                            }
+                        }
                         series.push({
                             name: item,
                             type: 'lines',
@@ -137,24 +158,28 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/worldoption", "./lib/WMMe
                                 constantSpeed: worldMap.flightIconSpeed,
                                 shadowBlur: 0,
                                 symbol: worldMap.FlightIcon,
-                                symbolSize: 10,
+                                symbolSize: 15,
                                 trailLength: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)',
+                                    shadowBlur: 10
                             },
-                            tooltip:{
-                                formatter:function(params){
+                            tooltip: {
+                                formatter: function(params) {
                                     var str = params.data.fromName + '→' + params.data.toName;
                                     return str;
                                 }
                             },
                             lineStyle: {
                                 normal: {
-                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, worldMap.getFlightColor(), false),
-                                    width: 1,
-                                    opacity: 0.6,
-                                    curveness: 0.2
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 0.5, worldMap.getFlightColor(), false),
+                                    width: 2,
+                                    opacity: 0.4,
+                                    curveness: 0.2,
+                                    shadowColor: 'rgba(0, 0, 0, 0.5)',
+                                    shadowBlur: 10
                                 }
                             },
-                            data: worldMap.convertData(seriesDataList[item])
+                            data: worldMap.convertData(seriesDataList[item], direction)
                         })
                     }
                 }
@@ -162,10 +187,36 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/worldoption", "./lib/WMMe
                 // 获取series循环需要的data
                 getSeriesList(seriesDataList);
 
+                var height = $element.height();
+                var width = $element.width();
+
+                // 插入元素
+                $element.html("<div class='worldMap' style='height: " + height + "px;width: " + width + "px'></div>")
+
                 // 获取option
                 var option = worldMap.getOption(series);
 
-                echarts.init($element.find('.worldMap')[0]).setOption(option);
+                var myChart = echarts.init($element.find('.worldMap')[0])
+                myChart.setOption(option);
+                var dimName = layout.qHyperCube.qDimensionInfo[0].qFallbackTitle;
+                var app = qlik.currApp();
+
+                myChart.on('click', function(params) {
+                    if (isNotNull(params.name)) {
+                        var value = params.name;
+                        app.field(dimName).selectValues([{ qText: value }], true, true);
+                    }
+                });
+
+                // myChart.on('legendselectchanged', function(params) {
+                //     console.log(params);
+                //     for (var key in params.selected) {
+                //         if (params.selected[key] == true) {
+                //             console.log(key)
+                //             selected = key;
+                //         }
+                //     }
+                // });
 
                 return qlik.Promise.resolve();
             }
