@@ -36,27 +36,26 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/china", "./lib/worldOptio
                         uses: "measures",
                         max: 8,
                         items: {
-                            direction: direction
+                            direction: direction,
+                            flightIconSpeed: flightIconSpeed,
+                            FlightIcon: FlightIcon,
+                            flightIconColor: flightIconColor,
+                            // visualMapStatus: visualMapStatus,
+                            // visualMapColor: visualMapColor
                         }
                     },
-                    sorting: {
-                        uses: "sorting"
-                    },
-                    settings: {
-                        uses: "settings"
-                    },
+                    // sorting: {
+                    //     uses: "sorting"
+                    // },
+                    // settings: {
+                    //     uses: "settings"
+                    // },
                     layout1: {
                         type: "items",
                         label: "地图",
                         items: {
                             backgroundColor: backgroundColor,
-                            mapType: mapType
-                        }
-                    },
-                    layout2: {
-                        type: "items",
-                        label: "图例",
-                        items: {
+                            mapType: mapType,
                             Legend: Legend,
                             legendStyle: legendStyle,
                             lengendPositionY: lengendPositionY,
@@ -64,16 +63,27 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/china", "./lib/worldOptio
                             legendWidth: legendWidth
                         }
                     },
-                    layout3: {
-                        type: "items",
-                        label: "航线",
-                        items: {
-                            // RouteDirection: RouteDirection,
-                            FlightIcon: FlightIcon,
-                            flightIconSpeed: flightIconSpeed,
-                            FlightColor: flightIconColor
-                        }
-                    },
+                    // layout2: {
+                    //     type: "items",
+                    //     label: "图例",
+                    //     items: {
+                    //         Legend: Legend,
+                    //         legendStyle: legendStyle,
+                    //         lengendPositionY: lengendPositionY,
+                    //         lengendPositionX: lengendPositionX,
+                    //         legendWidth: legendWidth
+                    //     }
+                    // },
+                    // layout3: {
+                    //     type: "items",
+                    //     label: "航线",
+                    //     items: {
+                    //         // RouteDirection: RouteDirection,
+                    //         // FlightIcon: FlightIcon,
+                    //         // flightIconSpeed: flightIconSpeed,
+                    //         // FlightColor: flightIconColor
+                    //     }
+                    // },
                     layout4: {
                         type: "items",
                         label: "阈值",
@@ -91,9 +101,7 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/china", "./lib/worldOptio
             },
             paint: function($element, layout) {
 
-                console.log(layout);
-
-                // console.log(layout.qHyperCube.qMeasureInfo[i].direction)
+                console.log(layout)
 
                 var worldMap = new WorldMap(layout);
 
@@ -140,13 +148,25 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/china", "./lib/worldOptio
 
                 function getSeriesList(seriesDataList) {
                     var direction = '';
+                    var flightIconSpeed = '';
+                    var FlightIcon = '';
+                    var flightIconColor = '';
                     for (var item in seriesDataList) {
                        
+                        // console.log(layout.qHyperCube.qMeasureInfo)
                         for(var key = 0; key< layout.qHyperCube.qMeasureInfo.length; key ++) {
                             if(layout.qHyperCube.qMeasureInfo[key].qFallbackTitle == item) {
-                                direction = layout.qHyperCube.qMeasureInfo[key].direction
+                                var measureInfo = layout.qHyperCube.qMeasureInfo[key]
+                                direction = measureInfo.direction || 'out';
+                                flightIconSpeed = measureInfo.flightIconSpeed || 10;
+                                // console.log(flightIconSpeed +"========="+ [key])
+                                FlightIcon = measureInfo.FlightIcon || "plane";
+                                flightIconColor = worldMap.getFlightColor(measureInfo.flightIconColor);
+                                // console.log(measureInfo.flightIconColor)
+                                // console.log(flightIconColor)
                             }
                         }
+                        // console.log(flightIconSpeed)
                         series.push({
                             name: item,
                             type: 'lines',
@@ -155,9 +175,9 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/china", "./lib/worldOptio
                             large: true,
                             effect: {
                                 show: true,
-                                constantSpeed: worldMap.flightIconSpeed,
+                                constantSpeed: flightIconSpeed,
                                 shadowBlur: 0,
-                                symbol: worldMap.FlightIcon,
+                                symbol: FlightIcon,
                                 symbolSize: 15,
                                 trailLength: 0,
                                 shadowColor: 'rgba(0, 0, 0, 0.5)',
@@ -171,7 +191,7 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/china", "./lib/worldOptio
                             },
                             lineStyle: {
                                 normal: {
-                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 0.5, worldMap.getFlightColor(), false),
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 0.5, flightIconColor, false),
                                     width: 2,
                                     opacity: 0.4,
                                     curveness: 0.2,
@@ -198,15 +218,7 @@ define(["qlik", "./lib/echarts", './lib/world', "./lib/china", "./lib/worldOptio
 
                 var myChart = echarts.init($element.find('.worldMap')[0])
                 myChart.setOption(option);
-                var dimName = layout.qHyperCube.qDimensionInfo[0].qFallbackTitle;
-                var app = qlik.currApp();
-
-                myChart.on('click', function(params) {
-                    if (isNotNull(params.name)) {
-                        var value = params.name;
-                        app.field(dimName).selectValues([{ qText: value }], true, true);
-                    }
-                });
+                
 
                 // myChart.on('legendselectchanged', function(params) {
                 //     console.log(params);
