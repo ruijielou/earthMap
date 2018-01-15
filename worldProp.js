@@ -1,3 +1,4 @@
+// JavaScript
 //  map option
 
 var planePath = 'path://M1705.06,1318.313v-89.254l-319.9-221.799l0.073-208.063c0.521-84.662-26.629-121.796-63.961-121.491c-37.332-0.305-64.482,36.829-63.961,121.491l0.073,208.063l-319.9,221.799v89.254l330.343-157.288l12.238,241.308l-134.449,92.931l0.531,42.034l175.125-42.917l175.125,42.917l0.531-42.034l-134.449-92.931l12.238-241.308L1705.06,1318.313z';
@@ -19,10 +20,6 @@ var latitude = {
 }
 
 var direction = {
-    // type: 'string',
-    // component: 'expression',
-    // label: '纬度',
-    // ref: 'qAttributeExpressions.1.qExpression'
 
     type: "string",
     component: "dropdown",
@@ -39,6 +36,33 @@ var direction = {
         label: "none"
     }],
     defaultValue: 'out'
+}
+
+var centerCityStatus = {
+    type: 'boolean',
+    component: 'switch',
+    label: '开启中心城市过滤',
+    ref: 'qDef.centerCityStatus',
+    options: [{
+            value: true,
+            label: 'On'
+        },
+        {
+            value: false,
+            label: 'Off'
+        }
+    ],
+    defaultValue: true
+}
+
+var centerCity = {
+    ref: 'qDef.centerCity',
+    label: '中心城市',
+    expression: 'optional',
+    type: 'string',
+    show: function(data) {
+        return data.qDef.centerCityStatus != false;
+    }
 }
 
 var Legend = {
@@ -66,10 +90,22 @@ var legendWidth = {
     min: 10,
     max: 100,
     step: 10,
-    defaultValue: 100,
+    defaultValue: 50,
     show: function(data) {
         return data.legendLabelSwitch != false;
     }
+}
+
+var symbolSize = {
+    type: "number",
+    component: "slider",
+    label: "圆点大小",
+    ref: "symbolSize",
+    min: 10,
+    max: 50,
+    step: 5,
+    defaultValue: 10,
+    show: true
 }
 var legendStyle = {
     type: 'string',
@@ -193,12 +229,19 @@ var backgroundColor = {
     defaultValue: '#044061'
 }
 
+var areaColor = {
+    ref: "areaColor",
+    label: "地图颜色",
+    type: "string",
+    defaultValue: 'transparent'
+}
+
 // 阈值显示状态
 var visualMapStatus = {
     type: 'boolean',
     component: 'switch',
     label: '是否显示阈值状态条',
-    ref: 'visualMapStatus',
+    ref: 'qDef.visualMapStatus',
     options: [{
             value: true,
             label: 'ON'
@@ -213,12 +256,12 @@ var visualMapStatus = {
 
 //  阈值颜色
 var visualMapColor = {
-   ref: "visualMapColor",
+   ref: "qDef.visualMapColor",
    label: "阈值颜色(添加多个颜色请用逗号分隔)",
    type: "string",
    defaultValue: '#99FF99,#CC99FF',
    show: function(data) {
-       return data.visualMapStatus != false;
+       return data.qDef.visualMapStatus != false;
    }
 }
 

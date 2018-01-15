@@ -1,2 +1,6 @@
-SHHGWorldMap2.qext;
-SHHGWorldMap2.js
+worldMap.qext;
+worldMap.js;
+echarts.js;
+world.js;
+china.js;
+worldProp.js
