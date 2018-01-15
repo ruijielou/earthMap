@@ -7,7 +7,8 @@ define(["qlik", "./echarts", './world', "./china", "./worldProp"],
 			selected: '',
 			selectedLegend: {}, //
 			visualMap: {}, //存储每个度量的阈值样式
-			legendData: []
+			legendData: [],
+			minMax: {}
         }
 
         return {
@@ -131,7 +132,15 @@ define(["qlik", "./echarts", './world', "./china", "./worldProp"],
 
 						legendData.push({ name: qMeasureInfo[i].qFallbackTitle, icon: 'circle' });
 
-						worldReset.legendData.push({ name: qMeasureInfo[i].qFallbackTitle, icon: 'circle' })
+						worldReset.legendData.push({ name: qMeasureInfo[i].qFallbackTitle, icon: 'circle' });
+
+						if(worldReset.minMax[qMeasureInfo[i].qFallbackTitle] == undefined) {
+							worldReset.minMax[qMeasureInfo[i].qFallbackTitle] = {
+								min: qMeasureInfo[i].qMin,
+								max: qMeasureInfo[i].qMax
+							}
+						}
+						
 
 						// 如果当前有选中状态的值则走选中状态
 						if(worldReset.selected == qMeasureInfo[i].qFallbackTitle) {
@@ -379,11 +388,19 @@ define(["qlik", "./echarts", './world', "./china", "./worldProp"],
                 var legendLabelSwitch = layout.legendLabelSwitch; //图例开关变量
                 var lengendPositionY = layout.lengendPositionY; //图例Y轴位置
                 var lengendPositionX = layout.lengendPositionX; //图例X轴位置
-                var mapType = layout.mapType;
-                var min = qHyperCube.qMeasureInfo[0].qMin;
-				var max = qHyperCube.qMeasureInfo[0].qMax;
+				var mapType = layout.mapType;
 				
 				var selecte = worldReset.legendData[0].name
+				var minMaxData = worldReset.minMax[worldReset.selected] == undefined?worldReset.minMax[selecte] : worldReset.minMax[worldReset.selected];
+				console.log(minMaxData)
+
+				var min = minMaxData.min;
+				var max = minMaxData.max;
+
+				console.log(min + '==========min' + max)
+
+				console.log(worldReset)
+				
 				var visualMapColor = worldReset.visualMap[worldReset.selected] == undefined? worldReset.visualMap[selecte].visualMapColor : worldReset.visualMap[worldReset.selected].visualMapColor;
 				var visualMapStatus =  worldReset.visualMap[worldReset.selected] == undefined? worldReset.visualMap[selecte].visualMapStatus : worldReset.visualMap[worldReset.selected].visualMapStatus;
 
@@ -504,6 +521,9 @@ define(["qlik", "./echarts", './world', "./china", "./worldProp"],
 
 					option.selected = worldReset.selectedLegend;
 
+
+					visualMap[0].min = worldReset.minMax[worldReset.selected].min;
+					visualMap[0].max = worldReset.minMax[worldReset.selected].max;
 					visualMap[0].show = visualMapStatus;
 					visualMap[0].inRange.color = getVisualMapColor(visualMapColor);
 
@@ -521,8 +541,8 @@ define(["qlik", "./echarts", './world', "./china", "./worldProp"],
 					// console.log(params)
 					if(params.name !== "") {
 						var value = params.name;
-						app.field(name1).selectValues([{qText: value}], true, true);
-						app.field(name2).selectValues([{qText: value}], true, true);
+						app.field(name1).selectValues([{qText: value}], true, false);
+						app.field(name2).selectValues([{qText: value}], true, false);
 						worldReset.isInit = false;
 					}
 				});
